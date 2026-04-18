@@ -2,6 +2,15 @@
 header('Content-Type: text/html; charset=UTF-8');
 session_start();
 
+session_start();
+ini_set('display_errors', 0);
+error_reporting(0);
+
+// CSRF токен
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 require_once __DIR__ . '/config.php';
 
 function getDb() {
@@ -20,6 +29,10 @@ $errors = [];
 $isAuth = isset($_SESSION['app_id']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+   // Проверка CSRF токена
+    if (empty($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Ошибка безопасности: неверный токен.');
+}
 
     $fio       = trim($_POST['fio'] ?? '');
     $phone     = trim($_POST['phone'] ?? '');
@@ -154,7 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } catch (PDOException $e) {
-        die('Ошибка БД: ' . htmlspecialchars($e->getMessage()));
+	if ($db->inTransaction()) $db->rollBack();
+	error_log($e->getMessage());
+	die('Произошла внутренняя ошибка. Попробуйте позже.');
     }
 }
 
@@ -191,7 +206,8 @@ if ($isAuth) {
             'contract'  => $row['contract'],
         ];
     } catch (PDOException $e) {
-        die('Ошибка БД: ' . htmlspecialchars($e->getMessage()));
+	error_log($e->getMessage());
+	die('Произошла внутренняя ошибка. Попробуйте позже.');
     }
 } elseif (!empty($_COOKIE['form_data'])) {
     $formData = json_decode($_COOKIE['form_data'], true) ?? [];
