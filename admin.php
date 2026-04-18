@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: text/html; charset=UTF-8');
 require_once __DIR__ . '/config.php';
+ini_set('display_errors', 0);
+error_reporting(0);
 
 function getDb() {
     static $db = null;
@@ -146,6 +148,7 @@ $editId = isset($_GET['edit']) ? (int)$_GET['edit'] : null;
         <tr>
             <?php if ($editId === $uid): ?>
                 <form action="admin.php" method="POST" class="edit-form">
+		<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SERVER['PHP_AUTH_USER']) ?>">
                 <input type="hidden" name="edit_id" value="<?= $uid ?>">
                 <td><?= $uid ?></td>
                 <td><input name="fio" value="<?= htmlspecialchars($user['fio']) ?>"></td>
