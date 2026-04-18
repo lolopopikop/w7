@@ -1,5 +1,6 @@
 <div class="container">
 <form action="index.php" method="POST">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
 
     <div class="form-group">
         <label for="fio">ФИО:</label>
