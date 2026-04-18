@@ -2,11 +2,22 @@
 header('Content-Type: text/html; charset=UTF-8');
 session_start();
 
+ini_set('display_errors', 0);
+error_reporting(0);
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 require_once __DIR__ . '/config.php';
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (empty($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('Ошибка безопасности: неверный токен.');
+    }
+
     $login    = trim($_POST['login'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
@@ -52,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="error-message">⚠️ <?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
     <form action="login.php" method="POST">
+	<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
         <div class="form-group">
             <label>Логин:</label>
             <input type="text" name="login" value="<?= htmlspecialchars($_POST['login'] ?? '') ?>">
